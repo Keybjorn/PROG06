@@ -78,15 +78,10 @@ public class AplicacionClientes {
                         c = new Cliente(NIF, nombre, tlfn, direccion, deuda);
 
                         // Declaración de la clase ObjectOutputStream (Añadir objeto en fichero)
-                        ObjectOutputStream oos;
-
-                        if (fichero.length() == 0) {
-                            oos = new ObjectOutputStream(new FileOutputStream(fichero));
-                        } else {
-                            oos = new MiObjectOutputStream(new FileOutputStream(fichero, true));
-                        }
+                        ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(fichero, true));
 
                         oos.writeObject(c);
+                        oos.close();
 
                         System.out.println("Se ha añadido correctamente");
 
@@ -94,18 +89,9 @@ public class AplicacionClientes {
                     case 2: // Listar clientes
 
                         if (fichero.exists()) {
-
                             ObjectInputStream ois = new ObjectInputStream(new FileInputStream(fichero));
-
-                            //Saldrá cuando no haya mas datos que leer, EOFException
-                            while (true) {
-
-                                //leo el objeto
-                                c = (Cliente) ois.readObject();
-
-                                //lo muestro
-                                System.out.println(c.toString());
-
+                            while ((c = (Cliente) ois.readObject()) != null) {
+                                System.out.println(c);
                             }
                         } else {
                             System.out.println("Debes crear el fichero");
@@ -115,45 +101,42 @@ public class AplicacionClientes {
                     case 3: // Buscar clientes
 
                         ObjectInputStream ois = new ObjectInputStream(new FileInputStream(fichero));
-
-                        Object aux = ois.readObject();
-
                         System.out.println("Introduce un NIF");
                         NIF = sc.nextLine();
 
-                        // Mientras haya objetos
-                        while (aux != null) {
-
-                            if (aux.toString().contains(NIF)) {
+                        while ((c = (Cliente)ois.readObject()) != null) {
+                            if (c.getNIF().equals(NIF)) {
                                 System.out.println(aux);
+                                break;
                             }
-                            aux = ois.readObject();
-
                         }
                         ois.close();
                         break;
 
                     case 4: // Borrar cliente
-
-                        ObjectInputStream objIs = new ObjectInputStream(new FileInputStream(fichero));
-                        ObjectOutputStream objOs = new ObjectOutputStream(new FileOutputStream(fichero));
-                        Object obj = objIs.readObject();
-
                         System.out.println("Introduce un NIF");
                         NIF = sc.nextLine();
-
-                        // Mientras haya objetos
-                        while (obj != null) {
-                            if (obj.toString().contains(NIF)) {
-                                System.out.println(obj);
-                                objOs.writeObject(null);
+                        
+                        Vector<Cliente> clients = new Vector<>();
+                        var in = new ObjectInputStream(new FileInputStream(fichero));
+                        boolean exist = false;
+                        while ((c = (Cliente)in.readObject()) != null) {
+                            clients.add(c);
+                            if (!exist && c.getNIF().equals(NIF)) {
+                                exist = true;
                             }
-
-                            obj = objIs.readObject();
-
                         }
 
-                        objIs.close();
+                        in.close();
+                        if (exist) {
+                            var out = new ObjectOutputStream(new FileOutputStream(fichero));
+                            for (Client client : clients) {
+                                if (client.getNIF().equals(NIF)) {
+                                    out.writeObject(client);
+                                }
+                            }
+                            out.close();
+                        }
                         break;
 
                     case 5: // Borrar fichero de clientes completamente
